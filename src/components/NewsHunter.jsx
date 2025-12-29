@@ -142,22 +142,43 @@ export default function NewsHunter() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        async function fetchNews() {
-            try {
-                const response = await fetch("https://news-hunter-backend.vercel.app/news");
-                const data = await response.json();
-                setNewsData({
-                    "The Economic Times": data["The Economic Times"] || [],
-                    "The Hindu": data["The Hindu"] || [],
-                    "NDTV": data["NDTV"] || [],
-                    "Times Of India": data["Times Of India"] || [],
-                });
-            } catch (err) {
-                console.error("Frontend error:", err);
+        const cachedNews = sessionStorage.getItem("newsData");
+
+        if (cachedNews) {
+            // ✅ Load cached news (NO API CALL)
+            setNewsData(JSON.parse(cachedNews));
+        } else {
+            // ✅ First visit → fetch from API
+            async function fetchNews() {
+                try {
+                    const response = await fetch(
+                        "https://news-hunter-backend.vercel.app/news"
+                    );
+                    const data = await response.json();
+
+                    const formattedData = {
+                        "The Economic Times": data["The Economic Times"] || [],
+                        "The Hindu": data["The Hindu"] || [],
+                        "NDTV": data["NDTV"] || [],
+                        "Times Of India": data["Times Of India"] || [],
+                    };
+
+                    setNewsData(formattedData);
+
+                    // ✅ Save to sessionStorage
+                    sessionStorage.setItem(
+                        "newsData",
+                        JSON.stringify(formattedData)
+                    );
+                } catch (err) {
+                    console.error("Frontend error:", err);
+                }
             }
+
+            fetchNews();
         }
-        fetchNews();
     }, []);
+
 
     const goToChat = () => {
         navigate("/chat", { state: { article: selectedArticle } });
