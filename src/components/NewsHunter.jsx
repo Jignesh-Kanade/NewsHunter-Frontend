@@ -15,7 +15,7 @@ export default function NewsHunter() {
     useEffect(() => {
         async function fetchNews() {
             try {
-                const response = await fetch("http://localhost:5000/news");
+                const response = await fetch("https://news-hunter-backend.vercel.app/news");
                 const data = await response.json();
                 setNewsData({
                     "The Economic Times": data["The Economic Times"] || [],
