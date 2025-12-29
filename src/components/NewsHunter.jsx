@@ -132,16 +132,36 @@ import { Link, useNavigate } from "react-router-dom";
 import { Newspaper } from "lucide-react";
 
 export default function NewsHunter() {
-    const [newsData, setNewsData] = useState({});
+    const [newsData, setNewsData] = useState({
+        "The Economic Times": [],
+        "The Hindu": [],
+        "NDTV": [],
+        "Times Of India": [],
+    });
     const [selectedArticle, setSelectedArticle] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("https://news-hunter-backend.vercel.app/news")
-            .then((res) => res.json())
-            .then(setNewsData)
-            .catch(console.error);
+        async function fetchNews() {
+            try {
+                const response = await fetch("https://news-hunter-backend.vercel.app/news");
+                const data = await response.json();
+                setNewsData({
+                    "The Economic Times": data["The Economic Times"] || [],
+                    "The Hindu": data["The Hindu"] || [],
+                    "NDTV": data["NDTV"] || [],
+                    "Times Of India": data["Times Of India"] || [],
+                });
+            } catch (err) {
+                console.error("Frontend error:", err);
+            }
+        }
+        fetchNews();
     }, []);
+
+    const goToChat = () => {
+        navigate("/chat", { state: { article: selectedArticle } });
+    };
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6">
