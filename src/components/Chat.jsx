@@ -209,6 +209,7 @@ export default function Chat() {
 
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 
 export default function Chat() {
     const location = useLocation();
@@ -234,7 +235,8 @@ export default function Chat() {
     const sendMessage = async () => {
         if (!message.trim() || isLoading) return;
 
-        setChat((prev) => [...prev, { role: "user", text: message }]);
+        const userMessage = message;
+        setChat((prev) => [...prev, { role: "user", text: userMessage }]);
         setMessage("");
         setIsLoading(true);
 
@@ -246,20 +248,118 @@ export default function Chat() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         headline: article?.title,
-                        message,
+                        message: userMessage,
                     }),
                 }
             );
 
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+
             const data = await res.json();
-            setChat((prev) => [...prev, { role: "ai", text: data.reply }]);
-        } catch {
+
+            if (data && data.reply) {
+                setChat((prev) => [...prev, { role: "ai", text: data.reply }]);
+            } else {
+                throw new Error("Invalid response format");
+            }
+        } catch (error) {
+            console.error("Chat error:", error);
             setChat((prev) => [
                 ...prev,
-                { role: "ai", text: "⚠️ Error: Could not reach AI." },
+                { role: "ai", text: "⚠️ Error: Could not reach AI. Please try again." },
             ]);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+
+    const renderMessage = (msg) => {
+        try {
+            if (msg.role === "ai") {
+                return (
+                    <ReactMarkdown
+                        components={{
+                            p: ({ children }) => (
+                                <p className="mb-2 last:mb-0">{children}</p>
+                            ),
+                            ul: ({ children }) => (
+                                <ul className="list-disc ml-4 mb-2 space-y-1">
+                                    {children}
+                                </ul>
+                            ),
+                            ol: ({ children }) => (
+                                <ol className="list-decimal ml-4 mb-2 space-y-1">
+                                    {children}
+                                </ol>
+                            ),
+                            li: ({ children }) => (
+                                <li className="ml-1">{children}</li>
+                            ),
+                            code: ({ inline, children }) =>
+                                inline ? (
+                                    <code className="bg-gray-300 px-1 py-0.5 rounded text-xs font-mono">
+                                        {children}
+                                    </code>
+                                ) : (
+                                    <code className="block bg-gray-300 p-2 rounded my-2 text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                                        {children}
+                                    </code>
+                                ),
+                            strong: ({ children }) => (
+                                <strong className="font-bold">{children}</strong>
+                            ),
+                            em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                            ),
+                            h1: ({ children }) => (
+                                <h1 className="text-lg font-bold mb-2 mt-1">
+                                    {children}
+                                </h1>
+                            ),
+                            h2: ({ children }) => (
+                                <h2 className="text-base font-bold mb-2 mt-1">
+                                    {children}
+                                </h2>
+                            ),
+                            h3: ({ children }) => (
+                                <h3 className="text-sm font-bold mb-1 mt-1">
+                                    {children}
+                                </h3>
+                            ),
+                            blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-gray-400 pl-3 italic my-2">
+                                    {children}
+                                </blockquote>
+                            ),
+                            a: ({ href, children }) => (
+                                <a
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 underline hover:text-blue-800"
+                                >
+                                    {children}
+                                </a>
+                            ),
+                        }}
+                    >
+                        {msg.text || ""}
+                    </ReactMarkdown>
+                );
+            }
+            return msg.text;
+        } catch (error) {
+            console.error("Render error:", error);
+            return msg.text;
         }
     };
 
@@ -296,7 +396,7 @@ export default function Chat() {
                                             : "bg-gray-200 text-gray-900 max-w-[75%]"
                                     }`}
                             >
-                                {msg.text}
+                                {renderMessage(msg)}
                             </div>
                         </div>
                     ))}
@@ -320,14 +420,15 @@ export default function Chat() {
                         type="text"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
                         placeholder="Ask something..."
                         disabled={isLoading}
-                        className="flex-1 p-3 border rounded-xl focus:outline-none text-sm sm:text-base disabled:bg-gray-100"
+                        className="flex-1 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base disabled:bg-gray-100"
                     />
                     <button
                         onClick={sendMessage}
-                        disabled={isLoading}
-                        className="px-6 bg-blue-600 text-white rounded-xl text-sm sm:text-base disabled:opacity-50"
+                        disabled={isLoading || !message.trim()}
+                        className="px-6 bg-blue-600 text-white rounded-xl text-sm sm:text-base disabled:opacity-50 hover:bg-blue-700 transition-colors"
                     >
                         {isLoading ? "Sending..." : "Send"}
                     </button>
