@@ -98,7 +98,7 @@
 
 
 
-
+/*
 
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
@@ -194,6 +194,128 @@ export default function Chat() {
                     className="px-4 sm:px-6 bg-blue-600 text-white rounded-xl text-sm sm:text-base"
                 >
                     Send
+                </button>
+            </div>
+        </div>
+    );
+}
+*/
+
+
+
+
+
+
+
+import { useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+
+export default function Chat() {
+    const location = useLocation();
+    const article = location.state?.article || null;
+
+    const [message, setMessage] = useState("");
+    const [chat, setChat] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const chatEndRef = useRef(null);
+
+    useEffect(() => {
+        if (article) {
+            setChat([
+                { role: "system", text: `Chatting about: "${article.title}"` }
+            ]);
+        }
+    }, [article]);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chat, isLoading]);
+
+    const sendMessage = async () => {
+        if (!message.trim() || isLoading) return;
+
+        setChat((prev) => [...prev, { role: "user", text: message }]);
+        setMessage("");
+        setIsLoading(true);
+
+        try {
+            const res = await fetch(
+                "https://news-hunter-backend.vercel.app/api/gemini/chat",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        headline: article?.title,
+                        message,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            setChat((prev) => [...prev, { role: "ai", text: data.reply }]);
+        } catch {
+            setChat((prev) => [
+                ...prev,
+                { role: "ai", text: "⚠️ Error: Could not reach AI." },
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col min-h-screen bg-gray-100 p-3 sm:p-6">
+            <h1 className="text-xl sm:text-3xl font-bold mb-3 text-center">
+                AI Chatbot
+            </h1>
+
+            {article && (
+                <p className="text-xs sm:text-sm text-gray-600 mb-2 text-center">
+                    📰 {article.title}
+                </p>
+            )}
+
+            <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow p-3 sm:p-4">
+                {chat.map((msg, idx) => (
+                    <div
+                        key={idx}
+                        className={`my-2 p-3 rounded-xl max-w-[85%] text-sm sm:text-base ${msg.role === "user"
+                                ? "bg-blue-500 text-white ml-auto"
+                                : msg.role === "system"
+                                    ? "bg-yellow-100 text-black mx-auto text-center"
+                                    : "bg-gray-200 text-black mr-auto"
+                            }`}
+                    >
+                        {msg.text}
+                    </div>
+                ))}
+
+                {/* 🔄 Loader bubble */}
+                {isLoading && (
+                    <div className="my-2 p-3 rounded-xl bg-gray-200 text-black mr-auto text-sm animate-pulse">
+                        AI is typing...
+                    </div>
+                )}
+
+                <div ref={chatEndRef} />
+            </div>
+
+            <div className="flex gap-2 mt-3">
+                <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Ask something..."
+                    disabled={isLoading}
+                    className="flex-1 p-3 border rounded-xl focus:outline-none text-sm sm:text-base disabled:bg-gray-100"
+                />
+                <button
+                    onClick={sendMessage}
+                    disabled={isLoading}
+                    className="px-4 sm:px-6 bg-blue-600 text-white rounded-xl text-sm sm:text-base disabled:opacity-50"
+                >
+                    {isLoading ? "Sending..." : "Send"}
                 </button>
             </div>
         </div>
