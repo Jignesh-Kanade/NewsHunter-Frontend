@@ -281,10 +281,10 @@ export default function Chat() {
                     <div
                         key={idx}
                         className={`my-2 p-3 rounded-xl max-w-[85%] text-sm sm:text-base ${msg.role === "user"
-                                ? "bg-blue-500 text-white ml-auto"
-                                : msg.role === "system"
-                                    ? "bg-yellow-100 text-black mx-auto text-center"
-                                    : "bg-gray-200 text-black mr-auto"
+                            ? "bg-blue-500 text-white ml-auto"
+                            : msg.role === "system"
+                                ? "bg-yellow-100 text-black mx-auto text-center"
+                                : "bg-gray-200 text-black mr-auto"
                             }`}
                     >
                         {msg.text}
@@ -294,7 +294,7 @@ export default function Chat() {
                 {/* 🔄 Loader bubble */}
                 {isLoading && (
                     <div className="my-2 p-3 rounded-xl bg-gray-200 text-black mr-auto text-sm animate-pulse">
-                        AI is typing...
+                        Responding...
                     </div>
                 )}
 
