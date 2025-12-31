@@ -252,7 +252,6 @@ export default function Chat() {
             );
 
             const data = await res.json();
-
             setChat((prev) => [...prev, { role: "ai", text: data.reply }]);
         } catch {
             setChat((prev) => [
@@ -265,58 +264,74 @@ export default function Chat() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 p-3 sm:p-6">
-            <h1 className="text-xl sm:text-3xl font-bold mb-3 text-center">
-                AI Chatbot
-            </h1>
-
-            {article && (
-                <p className="text-xs sm:text-sm text-gray-600 mb-2 text-center">
-                    📰 {article.title}
-                </p>
-            )}
-
-            <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow p-3 sm:p-4">
-                {chat.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        className={`my-2 p-3 rounded-xl max-w-[85%] text-sm sm:text-base ${msg.role === "user"
-                            ? "bg-blue-500 text-white ml-auto"
-                            : msg.role === "system"
-                                ? "bg-yellow-100 text-black mx-auto text-center"
-                                : "bg-gray-200 text-black mr-auto"
-                            }`}
-                    >
-                        {msg.text}
-                    </div>
-                ))}
-
-                {/* 🔄 Loader bubble */}
-                {isLoading && (
-                    <div className="my-2 p-3 rounded-xl bg-gray-200 text-black mr-auto text-sm animate-pulse">
-                        Responding...
-                    </div>
+        <div className="min-h-screen bg-gray-100 flex flex-col">
+            {/* Header */}
+            <div className="bg-white shadow-sm p-4">
+                <h1 className="text-2xl font-bold text-center">AI Chatbot</h1>
+                {article && (
+                    <p className="text-sm text-gray-600 text-center mt-1">
+                        📰 {article.title}
+                    </p>
                 )}
-
-                <div ref={chatEndRef} />
             </div>
 
-            <div className="flex gap-2 mt-3">
-                <input
-                    type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Ask something..."
-                    disabled={isLoading}
-                    className="flex-1 p-3 border rounded-xl focus:outline-none text-sm sm:text-base disabled:bg-gray-100"
-                />
-                <button
-                    onClick={sendMessage}
-                    disabled={isLoading}
-                    className="px-4 sm:px-6 bg-blue-600 text-white rounded-xl text-sm sm:text-base disabled:opacity-50"
-                >
-                    {isLoading ? "Sending..." : "Send"}
-                </button>
+            {/* Chat Container */}
+            <div className="flex-1 overflow-y-auto px-3 py-4">
+                <div className="max-w-4xl mx-auto bg-white rounded-xl shadow p-4">
+                    {chat.map((msg, idx) => (
+                        <div
+                            key={idx}
+                            className={`my-3 flex ${msg.role === "user"
+                                    ? "justify-end"
+                                    : msg.role === "system"
+                                        ? "justify-center"
+                                        : "justify-start"
+                                }`}
+                        >
+                            <div
+                                className={`px-4 py-3 rounded-2xl text-sm sm:text-base leading-relaxed ${msg.role === "user"
+                                        ? "bg-blue-600 text-white max-w-[70%]"
+                                        : msg.role === "system"
+                                            ? "bg-yellow-100 text-gray-800 text-center max-w-[90%]"
+                                            : "bg-gray-200 text-gray-900 max-w-[75%]"
+                                    }`}
+                            >
+                                {msg.text}
+                            </div>
+                        </div>
+                    ))}
+
+                    {isLoading && (
+                        <div className="flex justify-start my-3">
+                            <div className="px-4 py-3 rounded-2xl bg-gray-200 text-sm animate-pulse">
+                                Responding...
+                            </div>
+                        </div>
+                    )}
+
+                    <div ref={chatEndRef} />
+                </div>
+            </div>
+
+            {/* Input Bar */}
+            <div className="bg-white border-t p-4">
+                <div className="max-w-4xl mx-auto flex gap-2">
+                    <input
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Ask something..."
+                        disabled={isLoading}
+                        className="flex-1 p-3 border rounded-xl focus:outline-none text-sm sm:text-base disabled:bg-gray-100"
+                    />
+                    <button
+                        onClick={sendMessage}
+                        disabled={isLoading}
+                        className="px-6 bg-blue-600 text-white rounded-xl text-sm sm:text-base disabled:opacity-50"
+                    >
+                        {isLoading ? "Sending..." : "Send"}
+                    </button>
+                </div>
             </div>
         </div>
     );
